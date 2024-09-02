@@ -200,9 +200,8 @@ define('admin/manage/categories', [
 		newCategoryId = e.to.dataset.cid;
 	}
 
-	function itemDragDidEnd(e) {
+	/* function itemDragDidEnd(e) {
 		const isCategoryUpdate = parseInt(newCategoryId, 10) !== -1;
-
 		// Update needed?
 		if ((e.newIndex != null && parseInt(e.oldIndex, 10) !== parseInt(e.newIndex, 10)) || isCategoryUpdate) {
 			const cid = e.item.dataset.cid;
@@ -213,10 +212,8 @@ define('admin/manage/categories', [
 			modified[cid] = {
 				order: baseIndex + e.newIndex + 1,
 			};
-
 			if (isCategoryUpdate) {
 				modified[cid].parentCid = newCategoryId;
-
 				// Show/hide expand buttons after drag completion
 				const oldParentCid = parseInt(e.from.getAttribute('data-cid'), 10);
 				const newParentCid = parseInt(e.to.getAttribute('data-cid'), 10);
@@ -225,7 +222,6 @@ define('admin/manage/categories', [
 					if (toggle) {
 						toggle.classList.toggle('invisible', false);
 					}
-
 					const children = document.querySelectorAll(`.categories li[data-cid="${oldParentCid}"] ul[data-cid] li[data-cid]`);
 					if (!children.length) {
 						const toggle = document.querySelector(`.categories li[data-cid="${oldParentCid}"] .toggle`);
@@ -233,7 +229,6 @@ define('admin/manage/categories', [
 							toggle.classList.toggle('invisible', true);
 						}
 					}
-
 					e.item.dataset.parentCid = newParentCid;
 				}
 			}
@@ -241,8 +236,57 @@ define('admin/manage/categories', [
 			newCategoryId = -1;
 			api.put('/categories/' + cid, modified[cid]).catch(alerts.error);
 		}
-	}
+	} */
 
+	//asked chatgpt to help find out what function does and give suggestions on what a coder can do to reduce cognitive complexity
+	function itemDragDidEnd(e) {
+		const isCategoryUpdate = parseInt(newCategoryId, 10) !== -1;
+		if (shouldUpdate(e, isCategoryUpdate)) {
+			const cid = e.item.dataset.cid;
+			const modified = createModObject(e, cid, isCategoryUpdate);
+			if (isCategoryUpdate) {
+				handleCatUpdate(e, modified, cid);
+			}
+			newCategoryId = -1;
+			api.put('/categories/' + cid, modified[cid]).catch(alerts.error);
+		}
+	}
+	function shouldUpdate(e, isCategoryUpdate) {
+		return (e.newIndex != null && parseInt(e.oldIndex, 10) !== parseInt(e.newIndex, 10)) || isCategoryUpdate;
+	}
+	function createModObject(e, cid, isCategoryUpdate) {
+		const baseIndex = (ajaxify.data.pagination.currentPage - 1) * ajaxify.data.categoriesPerPage;
+		const modified = {};
+		modified[cid] = {
+			order: baseIndex + e.newIndex + 1,
+		};
+		if (isCategoryUpdate) {
+			modified[cid].parentCid = newCategoryId;
+		}
+		return modified;
+	}
+	function handleCatUpdate(e, modified, cid) {
+		const oldParentCid = parseInt(e.from.getAttribute('data-cid'), 10);
+		const newParentCid = parseInt(e.to.getAttribute('data-cid'), 10);
+		if (oldParentCid !== newParentCid) {
+			toggleExpand(newParentCid, oldParentCid);
+			e.item.dataset.parentCid = newParentCid;
+		}
+	}
+	function toggleExpand(newParentCid, oldParentCid) {
+		const newToggle = document.querySelector(`.categories li[data-cid="${newParentCid}"] .toggle`);
+		if (newToggle) {
+			newToggle.classList.toggle('invisible', false);
+		}
+		const children = document.querySelectorAll(`.categories li[data-cid="${oldParentCid}"] ul[data-cid] li[data-cid]`);
+		if (!children.length) {
+			const oldToggle = document.querySelector(`.categories li[data-cid="${oldParentCid}"] .toggle`);
+			if (oldToggle) {
+				oldToggle.classList.toggle('invisible', true);
+			}
+		}
+	}
+	
 	/**
 	 * Render categories - recursively
 	 *
