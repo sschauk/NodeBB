@@ -199,53 +199,17 @@ define('admin/manage/categories', [
 	function itemDidAdd(e) {
 		newCategoryId = e.to.dataset.cid;
 	}
-
-	/* function itemDragDidEnd(e) {
-		const isCategoryUpdate = parseInt(newCategoryId, 10) !== -1;
-		// Update needed?
-		if ((e.newIndex != null && parseInt(e.oldIndex, 10) !== parseInt(e.newIndex, 10)) || isCategoryUpdate) {
-			const cid = e.item.dataset.cid;
-			const modified = {};
-			// on page 1 baseIndex is 0, on page n baseIndex is (n - 1) * ajaxify.data.categoriesPerPage
-			// this makes sure order is correct when drag & drop is used on pages > 1
-			const baseIndex = (ajaxify.data.pagination.currentPage - 1) * ajaxify.data.categoriesPerPage;
-			modified[cid] = {
-				order: baseIndex + e.newIndex + 1,
-			};
-			if (isCategoryUpdate) {
-				modified[cid].parentCid = newCategoryId;
-				// Show/hide expand buttons after drag completion
-				const oldParentCid = parseInt(e.from.getAttribute('data-cid'), 10);
-				const newParentCid = parseInt(e.to.getAttribute('data-cid'), 10);
-				if (oldParentCid !== newParentCid) {
-					const toggle = document.querySelector(`.categories li[data-cid="${newParentCid}"] .toggle`);
-					if (toggle) {
-						toggle.classList.toggle('invisible', false);
-					}
-					const children = document.querySelectorAll(`.categories li[data-cid="${oldParentCid}"] ul[data-cid] li[data-cid]`);
-					if (!children.length) {
-						const toggle = document.querySelector(`.categories li[data-cid="${oldParentCid}"] .toggle`);
-						if (toggle) {
-							toggle.classList.toggle('invisible', true);
-						}
-					}
-					e.item.dataset.parentCid = newParentCid;
-				}
-			}
-
-			newCategoryId = -1;
-			api.put('/categories/' + cid, modified[cid]).catch(alerts.error);
-		}
-	} */
-
-	//asked chatgpt to help find out what function does and give suggestions on what a coder can do to reduce cognitive complexity
+	// asked chatgpt to help find out what function does and give
+	// suggestions on what a coder can do to reduce cognitive complexity
+	// this functions updates information once the user finishes drag/drop
 	function itemDragDidEnd(e) {
+		console.log('Console Logging Saanika Chauk');
 		const isCategoryUpdate = parseInt(newCategoryId, 10) !== -1;
 		if (shouldUpdate(e, isCategoryUpdate)) {
 			const cid = e.item.dataset.cid;
 			const modified = createModObject(e, cid, isCategoryUpdate);
 			if (isCategoryUpdate) {
-				handleCatUpdate(e, modified, cid);
+				handleCatUpdate(e);
 			}
 			newCategoryId = -1;
 			api.put('/categories/' + cid, modified[cid]).catch(alerts.error);
@@ -265,7 +229,7 @@ define('admin/manage/categories', [
 		}
 		return modified;
 	}
-	function handleCatUpdate(e, modified, cid) {
+	function handleCatUpdate(e) {
 		const oldParentCid = parseInt(e.from.getAttribute('data-cid'), 10);
 		const newParentCid = parseInt(e.to.getAttribute('data-cid'), 10);
 		if (oldParentCid !== newParentCid) {
@@ -286,7 +250,6 @@ define('admin/manage/categories', [
 			}
 		}
 	}
-	
 	/**
 	 * Render categories - recursively
 	 *
@@ -297,6 +260,7 @@ define('admin/manage/categories', [
 	 */
 	function renderList(categories, container, parentCategory) {
 		// Translate category names if needed
+		console.log('rendering categories in list');
 		let count = 0;
 		const parentId = parentCategory.cid;
 		categories.forEach(function (category, idx, parent) {
